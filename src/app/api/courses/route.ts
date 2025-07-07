@@ -15,7 +15,7 @@ export async function GET() {
   } catch (error: any) {
     console.error("Kurslar getirme hatası:", error);
     return NextResponse.json(
-      { error: "Kurslar getirilirken bir hata oluştu" },
+      { error: "Kurslarrs getirilirken bir hata oluştu" },
       { status: 500 }
     );
   }
