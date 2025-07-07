@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Yüze Yüzme Kursu",
-  description: "Uzman eğitmenler eşliğinde yüzme kursları",
+  description: "Uzman eğitmenler eğiliğinceee yüzme kursları",
 };
 
 export default function RootLayout({
