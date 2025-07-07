@@ -60,14 +60,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const isAdmin = user?.role === 'admin';
-  
-  // Debug log
-  console.log('AuthContext debug:', { 
-    user, 
-    isAuthenticated, 
-    isAdmin,
-    userRole: user?.role 
-  });
 
   return (
     <AuthContext.Provider value={{

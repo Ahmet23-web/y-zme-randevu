@@ -62,14 +62,6 @@ interface User {
 export default function Home() {
   const { user, login: authLogin, logout, isAuthenticated, isAdmin } = useAuth();
   
-  // Debug için console log'lar
-  console.log('Auth durumu:', { 
-    user, 
-    isAuthenticated, 
-    isAdmin, 
-    userRole: user?.role 
-  });
-  
   const [form, setForm] = useState(initialState);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -347,22 +339,6 @@ export default function Home() {
                   Admin Panel
                 </button>
               )}
-              {/* Debug: Always show admin button for testing */}
-              <button
-                onClick={() => {
-                  console.log('DEBUG - Auth durumu:', {
-                    user,
-                    isAuthenticated,
-                    isAdmin,
-                    userRole: user?.role,
-                    token: typeof window !== 'undefined' ? localStorage.getItem('token') : null
-                  });
-                  setActiveTab('admin');
-                }}
-                className={`px-3 py-2 rounded-md text-sm font-medium bg-red-600 text-white`}
-              >
-                Debug Admin
-              </button>
               {!isAuthenticated && (
                 <button
                   onClick={() => setActiveTab('register')}
