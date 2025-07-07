@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useTransition, useEffect } from "react";
-import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 
 const initialState = { 
@@ -70,27 +69,56 @@ interface Enrollment {
 // Carousel component'i
 const ImageCarousel: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [imageLoadError, setImageLoadError] = useState<{[key: number]: boolean}>({});
   
   const images = [
     {
       src: '/swimming-1.jpg',
       alt: 'Çocuk yüzme dersi',
-      title: 'Profesyonel Yüzme Eğitimi'
+      title: 'Profesyonel Yüzme Eğitimi',
+      description: 'Uzman eğitmenlerimizle güvenli yüzme öğrenin'
     },
     {
       src: '/swimming-2.jpg', 
       alt: 'Havuzda çocuk aktivitesi',
-      title: 'Güvenli Öğrenme Ortamı'
+      title: 'Güvenli Öğrenme Ortamı',
+      description: 'Temiz ve güvenli havuzlarımızda yüzme keyfi'
     },
     {
       src: '/swimming-3.jpg',
       alt: 'Çocukların havuzda eğlencesi',
-      title: 'Eğlenceli Yüzme Dersleri'
+      title: 'Eğlenceli Yüzme Dersleri',
+      description: 'Oyun odaklı yüzme eğitimi ile öğrenin'
     },
     {
       src: '/swimming-4.jpg',
       alt: 'Çocuk yüzme havuzu',
-      title: 'Modern Tesisler'
+      title: 'Modern Tesisler',
+      description: 'En son teknoloji ile donatılmış tesislerimiz'
+    },
+    {
+      src: '/swimming-5.jpg',
+      alt: 'Yetişkin yüzme dersi',
+      title: 'Yetişkin Yüzme Kursları',
+      description: 'Her yaşta yüzme öğrenebilirsiniz'
+    },
+    {
+      src: '/swimming-6.jpg',
+      alt: 'Grup yüzme antrenmanı',
+      title: 'Grup Antrenmanları',
+      description: 'Arkadaşlarınızla birlikte yüzme keyfi'
+    },
+    {
+      src: '/swimming-7.jpg',
+      alt: 'Su sporları aktiviteleri',
+      title: 'Su Sporları',
+      description: 'Yüzmenin ötesinde su sporları deneyimi'
+    },
+    {
+      src: '/swimming-8.jpg',
+      alt: 'Çocuk havuz eğlencesi',
+      title: 'Çocuk Aktiviteleri',
+      description: 'Çocuklar için özel tasarlanmış etkinlikler'
     }
   ];
 
@@ -98,7 +126,7 @@ const ImageCarousel: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % images.length);
-    }, 4000); // 4 saniyede bir değişir
+    }, 5000); // 5 saniyede bir değişir
 
     return () => clearInterval(interval);
   }, [images.length]);
@@ -115,8 +143,12 @@ const ImageCarousel: React.FC = () => {
     setCurrentSlide((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  const handleImageError = (index: number) => {
+    setImageLoadError(prev => ({...prev, [index]: true}));
+  };
+
   return (
-    <div className="relative w-full h-96 mb-8 rounded-lg overflow-hidden shadow-lg">
+    <div className="relative w-full h-96 mb-8 rounded-lg overflow-hidden shadow-lg bg-gradient-to-r from-blue-500 to-cyan-500">
       {/* Resimler */}
       <div className="relative w-full h-full">
         {images.map((image, index) => (
@@ -126,18 +158,31 @@ const ImageCarousel: React.FC = () => {
               index === currentSlide ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            <Image
-              src={image.src}
-              alt={image.alt}
-              fill
-              className="object-cover"
-              priority={index === 0}
-            />
-            <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+            {!imageLoadError[index] ? (
+              <>
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  className="w-full h-full object-cover"
+                  onError={() => handleImageError(index)}
+                  onLoad={() => {}}
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+              </>
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center">
+                <div className="text-center text-white">
+                  <svg className="w-16 h-16 mx-auto mb-4 opacity-70" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                  </svg>
+                  <p className="text-sm opacity-80">Resim Yükleniyor...</p>
+                </div>
+              </div>
+            )}
             <div className="absolute bottom-0 left-0 right-0 p-6">
               <h3 className="text-white text-2xl font-bold mb-2">{image.title}</h3>
               <p className="text-white text-sm opacity-90">
-                Uzman eğitmenlerimiz ile güvenli ve eğlenceli yüzme öğrenin
+                {image.description}
               </p>
             </div>
           </div>
@@ -147,7 +192,7 @@ const ImageCarousel: React.FC = () => {
       {/* Sol/Sağ ok butonları */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all duration-200"
+        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
         aria-label="Önceki resim"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,7 +202,7 @@ const ImageCarousel: React.FC = () => {
 
       <button
         onClick={nextSlide}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all duration-200"
+        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
         aria-label="Sonraki resim"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,6 +226,16 @@ const ImageCarousel: React.FC = () => {
             />
           ))}
         </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-black bg-opacity-20">
+        <div 
+          className="h-full bg-white transition-all duration-5000 ease-linear"
+          style={{
+            width: `${((currentSlide + 1) / images.length) * 100}%`
+          }}
+        />
       </div>
     </div>
   );
