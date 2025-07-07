@@ -4,12 +4,12 @@ import { User } from "@/lib/models";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
     
-    const { id } = params;
+    const { id } = await params;
     
     // Kullanıcıyı bul
     const user = await User.findById(id);

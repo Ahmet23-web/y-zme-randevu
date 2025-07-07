@@ -4,12 +4,12 @@ import { User } from "@/lib/models";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
     
-    const { id } = params;
+    const { id } = await params;
     
     // Kullanıcıyı bul ve sil
     const deletedUser = await User.findByIdAndDelete(id);
