@@ -1,0 +1,24 @@
+# Git ile GitHub'a yükleme komutları
+
+# 1. Git deposu başlat
+git init
+
+# 2. Remote repository ekle (GitHub'da oluşturduktan sonra)
+git remote add origin https://github.com/YOUR_USERNAME/yuze-randevu.git
+
+# 3. Dosyaları staging area'ya ekle
+git add .
+
+# 4. İlk commit
+git commit -m "Initial commit - Yüzme kursu randevu sistemi"
+
+# 5. Main branch olarak ayarla
+git branch -M main
+
+# 6. GitHub'a push et
+git push -u origin main
+
+# Sonraki güncellemeler için:
+git add .
+git commit -m "Değişiklik açıklaması"
+git push 
