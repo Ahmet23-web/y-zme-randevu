@@ -1,7 +1,7 @@
 "use client";
 
+import React, { useState, useTransition, useEffect } from "react";
 import Image from "next/image";
-import { useState, useTransition, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 
 const initialState = { 
@@ -58,6 +58,133 @@ interface User {
   };
   createdAt: string;
 }
+
+interface Enrollment {
+  _id: string;
+  user: User;
+  course: Course;
+  enrollmentDate: string;
+  status: string;
+}
+
+// Carousel component'i
+const ImageCarousel: React.FC = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  const images = [
+    {
+      src: '/swimming-1.jpg',
+      alt: 'Çocuk yüzme dersi',
+      title: 'Profesyonel Yüzme Eğitimi'
+    },
+    {
+      src: '/swimming-2.jpg', 
+      alt: 'Havuzda çocuk aktivitesi',
+      title: 'Güvenli Öğrenme Ortamı'
+    },
+    {
+      src: '/swimming-3.jpg',
+      alt: 'Çocukların havuzda eğlencesi',
+      title: 'Eğlenceli Yüzme Dersleri'
+    },
+    {
+      src: '/swimming-4.jpg',
+      alt: 'Çocuk yüzme havuzu',
+      title: 'Modern Tesisler'
+    }
+  ];
+
+  // Otomatik geçiş
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % images.length);
+    }, 4000); // 4 saniyede bir değişir
+
+    return () => clearInterval(interval);
+  }, [images.length]);
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % images.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  return (
+    <div className="relative w-full h-96 mb-8 rounded-lg overflow-hidden shadow-lg">
+      {/* Resimler */}
+      <div className="relative w-full h-full">
+        {images.map((image, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              index === currentSlide ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <Image
+              src={image.src}
+              alt={image.alt}
+              fill
+              className="object-cover"
+              priority={index === 0}
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+            <div className="absolute bottom-0 left-0 right-0 p-6">
+              <h3 className="text-white text-2xl font-bold mb-2">{image.title}</h3>
+              <p className="text-white text-sm opacity-90">
+                Uzman eğitmenlerimiz ile güvenli ve eğlenceli yüzme öğrenin
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Sol/Sağ ok butonları */}
+      <button
+        onClick={prevSlide}
+        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all duration-200"
+        aria-label="Önceki resim"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      <button
+        onClick={nextSlide}
+        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all duration-200"
+        aria-label="Sonraki resim"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      {/* Alt nokta göstergeleri */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+        <div className="flex space-x-2">
+          {images.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                index === currentSlide 
+                  ? 'bg-white' 
+                  : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+              }`}
+              aria-label={`${index + 1}. resme git`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function Home() {
   const { user, login: authLogin, logout, isAuthenticated, isAdmin } = useAuth();
@@ -377,6 +504,9 @@ export default function Home() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Image Carousel */}
+        <ImageCarousel />
+
         {/* Ana Sayfa */}
         {activeTab === 'home' && (
           <div className="space-y-12">
