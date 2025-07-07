@@ -70,6 +70,7 @@ interface Enrollment {
 const ImageCarousel: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [imageLoadError, setImageLoadError] = useState<{[key: number]: boolean}>({});
+  const [imageLoadSuccess, setImageLoadSuccess] = useState<{[key: number]: boolean}>({});
   
   const images = [
     {
@@ -144,11 +145,24 @@ const ImageCarousel: React.FC = () => {
   };
 
   const handleImageError = (index: number) => {
+    console.error(`Resim yüklenemedi: ${images[index].src}`);
     setImageLoadError(prev => ({...prev, [index]: true}));
+  };
+
+  const handleImageLoad = (index: number) => {
+    console.log(`Resim başarıyla yüklendi: ${images[index].src}`);
+    setImageLoadSuccess(prev => ({...prev, [index]: true}));
   };
 
   return (
     <div className="relative w-full h-96 mb-8 rounded-lg overflow-hidden shadow-lg bg-gradient-to-r from-blue-500 to-cyan-500">
+      {/* Debug bilgisi */}
+      <div className="absolute top-4 left-4 z-50 bg-black bg-opacity-50 text-white text-xs p-2 rounded">
+        Aktif: {currentSlide + 1}/{images.length} | 
+        Yüklenen: {Object.keys(imageLoadSuccess).length} | 
+        Hata: {Object.keys(imageLoadError).length}
+      </div>
+
       {/* Resimler */}
       <div className="relative w-full h-full">
         {images.map((image, index) => (
@@ -165,7 +179,12 @@ const ImageCarousel: React.FC = () => {
                   alt={image.alt}
                   className="w-full h-full object-cover"
                   onError={() => handleImageError(index)}
-                  onLoad={() => {}}
+                  onLoad={() => handleImageLoad(index)}
+                  style={{ 
+                    minHeight: '100%', 
+                    minWidth: '100%',
+                    backgroundColor: '#f0f0f0'
+                  }}
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-30"></div>
               </>
@@ -175,7 +194,8 @@ const ImageCarousel: React.FC = () => {
                   <svg className="w-16 h-16 mx-auto mb-4 opacity-70" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                   </svg>
-                  <p className="text-sm opacity-80">Resim Yükleniyor...</p>
+                  <p className="text-sm opacity-80">Resim yüklenemedi</p>
+                  <p className="text-xs opacity-60">{image.src}</p>
                 </div>
               </div>
             )}
@@ -192,7 +212,7 @@ const ImageCarousel: React.FC = () => {
       {/* Sol/Sağ ok butonları */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
+        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm z-40"
         aria-label="Önceki resim"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,7 +222,7 @@ const ImageCarousel: React.FC = () => {
 
       <button
         onClick={nextSlide}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
+        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm z-40"
         aria-label="Sonraki resim"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,7 +231,7 @@ const ImageCarousel: React.FC = () => {
       </button>
 
       {/* Alt nokta göstergeleri */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-40">
         <div className="flex space-x-2">
           {images.map((_, index) => (
             <button
@@ -229,7 +249,7 @@ const ImageCarousel: React.FC = () => {
       </div>
 
       {/* Progress bar */}
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-black bg-opacity-20">
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-black bg-opacity-20 z-30">
         <div 
           className="h-full bg-white transition-all duration-5000 ease-linear"
           style={{
