@@ -30,19 +30,32 @@ export async function POST(req: NextRequest) {
 
     await admin.save();
     
-    // Eğitmen kullanıcısı
-    const instructor = new User({
-      name: "Ahmet",
-      surname: "Yılmaz",
-      email: "ahmet@yuze.com",
+    // Eğitmen kullanıcıları
+    const instructor1 = new User({
+      name: "Nisanur",
+      surname: "Dağ",
+      email: "nisanur@yuze.com",
       phone: "05551234567",
-      username: "ahmet_yilmaz",
+      username: "nisanur_dag",
       password: hashedPassword,
       role: "instructor",
-      age: 35
+      age: 28
     });
 
-    await instructor.save();
+    await instructor1.save();
+
+    const instructor2 = new User({
+      name: "Sıla",
+      surname: "Çilingir",
+      email: "sila@yuze.com",
+      phone: "05557654321",
+      username: "sila_cilingir",
+      password: hashedPassword,
+      role: "instructor",
+      age: 26
+    });
+
+    await instructor2.save();
 
     // Örnek havuz oluştur
     const pool = new Pool({
@@ -67,7 +80,7 @@ export async function POST(req: NextRequest) {
         duration: 45,
         maxStudents: 8,
         price: 800,
-        instructor: instructor._id
+        instructor: instructor1._id
       },
       {
         name: "Yetişkin Yüzme Kursu (Başlangıç)",
@@ -77,7 +90,7 @@ export async function POST(req: NextRequest) {
         duration: 60,
         maxStudents: 6,
         price: 1000,
-        instructor: instructor._id
+        instructor: instructor2._id
       },
       {
         name: "İleri Seviye Yüzme",
@@ -87,7 +100,7 @@ export async function POST(req: NextRequest) {
         duration: 90,
         maxStudents: 10,
         price: 1200,
-        instructor: instructor._id
+        instructor: instructor1._id
       },
       {
         name: "Yüzme Performans Geliştirme",
@@ -97,7 +110,7 @@ export async function POST(req: NextRequest) {
         duration: 75,
         maxStudents: 8,
         price: 1100,
-        instructor: instructor._id
+        instructor: instructor2._id
       }
     ];
 
@@ -170,7 +183,8 @@ export async function POST(req: NextRequest) {
       message: "Örnek veriler başarıyla eklendi",
       data: {
         admin: admin._id,
-        instructor: instructor._id,
+        instructor1: instructor1._id,
+        instructor2: instructor2._id,
         pool: pool._id,
         courses: savedCourses.length,
         schedules: schedules.length

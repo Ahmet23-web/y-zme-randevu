@@ -142,7 +142,7 @@ const ImageCarousel: React.FC = () => {
                   <svg className="w-20 h-20 mx-auto mb-4 opacity-70" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                   </svg>
-                  <p className="text-lg">Yüzme Akademisi</p>
+                  <p className="text-lg">Ata Yüzme Akademisi</p>
                 </div>
               </div>
             )}
@@ -496,7 +496,7 @@ export default function Home() {
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold text-blue-600">
-                🏊‍♀️ Yüzme Akademisi
+                🏊‍♀️ Ata Yüzme Akademisi
               </h1>
             </div>
             
@@ -564,7 +564,7 @@ export default function Home() {
         <div className="container mx-auto px-6">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4 text-blue-400">Yüzme Akademisi</h3>
+              <h3 className="text-xl font-bold mb-4 text-blue-400">Ata Yüzme Akademisi</h3>
               <p className="text-gray-300 leading-relaxed">
                 Profesyonel yüzme eğitimi ile hayallerinizi gerçeğe dönüştürün.
               </p>
@@ -601,7 +601,7 @@ export default function Home() {
           </div>
           
           <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
-            <p>&copy; 2024 Yüzme Akademisi. Tüm hakları saklıdır.</p>
+            <p>&copy; 2024 Ata Yüzme Akademisi. Tüm hakları saklıdır.</p>
           </div>
         </div>
       </footer>
