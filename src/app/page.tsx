@@ -1,61 +1,27 @@
-"use client";
+'use client';
 
 import React, { useState, useTransition, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 
-const initialState = { 
-  name: "", 
-  surname: "", 
-  email: "", 
-  phone: "", 
-  username: "", 
-  password: "",
-  age: "",
-  emergencyContact: {
-    name: "",
-    phone: "",
-    relationship: ""
-  },
-  medicalInfo: {
-    hasConditions: false,
-    conditions: [],
-    allergies: [],
-    medications: []
-  }
-};
-
-const initialLogin = { identifier: "", password: "" };
+interface User {
+  _id: string;
+  username: string;
+  email: string;
+  role: 'student' | 'instructor' | 'admin';
+  fullName?: string;
+  phone?: string;
+}
 
 interface Course {
   _id: string;
-  name: string;
+  title: string;
   description: string;
-  level: string;
-  ageGroup: string;
-  duration: number;
-  maxStudents: number;
+  instructor: User;
+  schedule: string;
   price: number;
-  instructor: {
-    name: string;
-    surname: string;
-  };
-}
-
-interface User {
-  _id: string;
-  name: string;
-  surname: string;
-  email: string;
-  username: string;
-  phone: string;
-  age: number;
-  role: string;
-  emergencyContact?: {
-    name: string;
-    phone: string;
-    relationship: string;
-  };
-  createdAt: string;
+  maxStudents: number;
+  currentStudents: number;
+  level: 'beginner' | 'intermediate' | 'advanced';
 }
 
 interface Enrollment {
@@ -70,7 +36,6 @@ interface Enrollment {
 const ImageCarousel: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [imageLoadError, setImageLoadError] = useState<{[key: number]: boolean}>({});
-  const [imageLoadSuccess, setImageLoadSuccess] = useState<{[key: number]: boolean}>({});
   
   const images = [
     {
@@ -127,7 +92,7 @@ const ImageCarousel: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % images.length);
-    }, 5000); // 5 saniyede bir değişir
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [images.length]);
@@ -145,31 +110,18 @@ const ImageCarousel: React.FC = () => {
   };
 
   const handleImageError = (index: number) => {
-    console.error(`Resim yüklenemedi: ${images[index].src}`);
     setImageLoadError(prev => ({...prev, [index]: true}));
   };
 
-  const handleImageLoad = (index: number) => {
-    console.log(`Resim başarıyla yüklendi: ${images[index].src}`);
-    setImageLoadSuccess(prev => ({...prev, [index]: true}));
-  };
-
   return (
-    <div className="relative w-full h-96 mb-8 rounded-lg overflow-hidden shadow-lg bg-gradient-to-r from-blue-500 to-cyan-500">
-      {/* Debug bilgisi */}
-      <div className="absolute top-4 left-4 z-50 bg-black bg-opacity-50 text-white text-xs p-2 rounded">
-        Aktif: {currentSlide + 1}/{images.length} | 
-        Yüklenen: {Object.keys(imageLoadSuccess).length} | 
-        Hata: {Object.keys(imageLoadError).length}
-      </div>
-
+    <div className="relative w-full h-[600px] mb-16 rounded-3xl overflow-hidden shadow-2xl">
       {/* Resimler */}
       <div className="relative w-full h-full">
         {images.map((image, index) => (
           <div
             key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === currentSlide ? 'opacity-100' : 'opacity-0'
+            className={`absolute inset-0 transition-all duration-1000 ${
+              index === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
             }`}
           >
             {!imageLoadError[index] ? (
@@ -179,1025 +131,731 @@ const ImageCarousel: React.FC = () => {
                   alt={image.alt}
                   className="w-full h-full object-cover"
                   onError={() => handleImageError(index)}
-                  onLoad={() => handleImageLoad(index)}
                   style={{ 
-                    minHeight: '100%', 
-                    minWidth: '100%',
-                    backgroundColor: '#f0f0f0'
+                    filter: 'brightness(0.8)',
                   }}
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-30"></div>
               </>
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center">
+              <div className="w-full h-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center">
                 <div className="text-center text-white">
-                  <svg className="w-16 h-16 mx-auto mb-4 opacity-70" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-20 h-20 mx-auto mb-4 opacity-70" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                   </svg>
-                  <p className="text-sm opacity-80">Resim yüklenemedi</p>
-                  <p className="text-xs opacity-60">{image.src}</p>
+                  <p className="text-lg">Yüzme Akademisi</p>
                 </div>
               </div>
             )}
-            <div className="absolute bottom-0 left-0 right-0 p-6">
-              <h3 className="text-white text-2xl font-bold mb-2">{image.title}</h3>
-              <p className="text-white text-sm opacity-90">
-                {image.description}
-              </p>
+            
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/40"></div>
+            
+            {/* Content */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center text-white max-w-4xl px-6">
+                <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
+                  {image.title}
+                </h1>
+                <p className="text-xl md:text-2xl opacity-90 mb-8 font-light">
+                  {image.description}
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                    Kurslara Katıl
+                  </button>
+                  <button className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 backdrop-blur-sm">
+                    Daha Fazla Bilgi
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Sol/Sağ ok butonları */}
+      {/* Navigation Buttons */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm z-40"
+        className="absolute left-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-4 rounded-full transition-all duration-300 backdrop-blur-sm z-40 group"
         aria-label="Önceki resim"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-6 h-6 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
       </button>
 
       <button
         onClick={nextSlide}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm z-40"
+        className="absolute right-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-4 rounded-full transition-all duration-300 backdrop-blur-sm z-40 group"
         aria-label="Sonraki resim"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
       </button>
 
-      {/* Alt nokta göstergeleri */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-40">
-        <div className="flex space-x-2">
+      {/* Dots Indicator */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-40">
+        <div className="flex space-x-3">
           {images.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-200 ${
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${
                 index === currentSlide 
-                  ? 'bg-white' 
-                  : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+                  ? 'bg-white scale-125' 
+                  : 'bg-white/50 hover:bg-white/75'
               }`}
               aria-label={`${index + 1}. resme git`}
             />
           ))}
         </div>
       </div>
-
-      {/* Progress bar */}
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-black bg-opacity-20 z-30">
-        <div 
-          className="h-full bg-white transition-all duration-5000 ease-linear"
-          style={{
-            width: `${((currentSlide + 1) / images.length) * 100}%`
-          }}
-        />
-      </div>
     </div>
   );
 };
 
+// Features Section Component
+const FeaturesSection: React.FC = () => {
+  const features = [
+    {
+      icon: (
+        <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      title: "Güvenli Eğitim",
+      description: "Sertifikalı eğitmenlerimiz ile güvenli öğrenme ortamı"
+    },
+    {
+      icon: (
+        <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+        </svg>
+      ),
+      title: "Kişisel Eğitim",
+      description: "Her yaş grubuna özel bireysel ve grup dersleri"
+    },
+    {
+      icon: (
+        <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+        </svg>
+      ),
+      title: "Modern Tesis",
+      description: "En son teknoloji ile donatılmış havuz ve ekipmanlar"
+    },
+    {
+      icon: (
+        <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+      ),
+      title: "Sertifikalı Program",
+      description: "Uluslararası standartlarda sertifikasyon programları"
+    }
+  ];
+
+  return (
+    <section className="py-20 bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
+            Neden Bizi Seçmelisiniz?
+          </h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Profesyonel kadromuz ve modern tesislerimizle en kaliteli yüzme eğitimini sunuyoruz
+          </p>
+        </div>
+        
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {features.map((feature, index) => (
+            <div 
+              key={index}
+              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 text-center group"
+            >
+              <div className="text-blue-600 mb-6 flex justify-center group-hover:scale-110 transition-transform duration-300">
+                {feature.icon}
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                {feature.title}
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                {feature.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// Stats Section Component
+const StatsSection: React.FC = () => {
+  const stats = [
+    { number: "500+", label: "Mutlu Öğrenci" },
+    { number: "15+", label: "Deneyimli Eğitmen" },
+    { number: "8", label: "Farklı Seviye" },
+    { number: "5", label: "Yıllık Deneyim" }
+  ];
+
+  return (
+    <section className="py-20 bg-blue-600 text-white">
+      <div className="container mx-auto px-6">
+        <div className="grid md:grid-cols-4 gap-8 text-center">
+          {stats.map((stat, index) => (
+            <div key={index} className="group">
+              <div className="text-4xl md:text-5xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300">
+                {stat.number}
+              </div>
+              <div className="text-lg text-blue-100">
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// Contact Section Component
+const ContactSection: React.FC = () => {
+  return (
+    <section className="py-20 bg-white">
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
+            İletişim
+          </h2>
+          <p className="text-xl text-gray-600">
+            Bizimle iletişime geçin ve yüzme serüveninize başlayın
+          </p>
+        </div>
+        
+        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <div className="text-center p-6 rounded-2xl hover:bg-blue-50 transition-colors duration-300">
+            <div className="text-blue-600 mb-4 flex justify-center">
+              <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Adres</h3>
+            <p className="text-gray-600">
+              Atatürk Mahallesi<br />
+              Yüzme Havuzu Sokağı No:1<br />
+              Elazığ, Türkiye
+            </p>
+          </div>
+          
+          <div className="text-center p-6 rounded-2xl hover:bg-blue-50 transition-colors duration-300">
+            <div className="text-blue-600 mb-4 flex justify-center">
+              <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Telefon</h3>
+            <p className="text-gray-600">
+              +90 424 123 45 67<br />
+              +90 535 123 45 67
+            </p>
+          </div>
+          
+          <div className="text-center p-6 rounded-2xl hover:bg-blue-50 transition-colors duration-300">
+            <div className="text-blue-600 mb-4 flex justify-center">
+              <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">E-posta</h3>
+            <p className="text-gray-600">
+              info@yuzmekursu.com<br />
+              kayit@yuzmekursu.com
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 export default function Home() {
-  const { user, login: authLogin, logout, isAuthenticated, isAdmin } = useAuth();
-  
-  const [form, setForm] = useState(initialState);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { user, isAuthenticated, isAdmin } = useAuth();
   const [isPending, startTransition] = useTransition();
-
-  const [login, setLogin] = useState(initialLogin);
-  const [loginMessage, setLoginMessage] = useState<string | null>(null);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [isLoginPending, startLoginTransition] = useTransition();
-
   const [courses, setCourses] = useState<Course[]>([]);
-  const [isLoadingCourses, setIsLoadingCourses] = useState(true);
-  
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [showCourses, setShowCourses] = useState(false);
+  const [showEnrollments, setShowEnrollments] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
-  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showUserModal, setShowUserModal] = useState(false);
-  
-  const [activeTab, setActiveTab] = useState<'home' | 'courses' | 'admin' | 'register' | 'login'>('home');
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    students: 0,
+    instructors: 0,
+    admins: 0
+  });
 
-  // Kursları yükle
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const res = await fetch('/api/courses');
-        const data = await res.json();
-        if (res.ok) {
-          setCourses(data.courses);
-        }
-      } catch (err) {
-        console.error('Kurslar yüklenirken hata:', err);
-      } finally {
-        setIsLoadingCourses(false);
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch('/api/courses');
+      if (response.ok) {
+        const data = await response.json();
+        setCourses(data.courses || []);
       }
-    };
+    } catch (err) {
+      console.error('Kurslar alınamadı:', err);
+    }
+  };
 
-    fetchCourses();
-  }, []);
-
-  // Kullanıcıları yükle (sadece admin için)
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await fetch('/api/users');
-        const data = await res.json();
-        if (res.ok) {
-          setUsers(data.users);
-        }
-      } catch (err) {
-        console.error('Kullanıcılar yüklenirken hata:', err);
-      } finally {
-        setIsLoadingUsers(false);
+  const fetchEnrollments = async () => {
+    try {
+      const response = await fetch('/api/enrollments');
+      if (response.ok) {
+        const data = await response.json();
+        setEnrollments(data.enrollments || []);
       }
-    };
-
-    if (activeTab === 'admin' && isAdmin) {
-      fetchUsers();
-    }
-  }, [activeTab, isAdmin]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
-    
-    if (name.startsWith('emergencyContact.')) {
-      const field = name.split('.')[1];
-      setForm(prev => ({
-        ...prev,
-        emergencyContact: {
-          ...prev.emergencyContact,
-          [field]: value
-        }
-      }));
-    } else if (type === 'number') {
-      setForm(prev => ({ ...prev, [name]: parseInt(value) || '' }));
-    } else {
-      setForm(prev => ({ ...prev, [name]: value }));
+    } catch (error) {
+      console.error('Kayıtlar alınamadı:', error);
     }
   };
 
-  const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLogin({ ...login, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage(null);
-    setError(null);
-    startTransition(async () => {
-      try {
-        const res = await fetch("/api/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setMessage(data.message || "Kayıt başarılı! En kısa sürede sizinle iletişime geçeceğiz.");
-          setForm(initialState);
-          // Kullanıcılar listesini yenile (sadece admin için)
-          if (activeTab === 'admin' && isAdmin) {
-            const usersRes = await fetch('/api/users');
-            const usersData = await usersRes.json();
-            if (usersRes.ok) {
-              setUsers(usersData.users);
-            }
-          }
-        } else {
-          // Daha detaylı hata mesajları
-          if (data.error?.fieldErrors) {
-            const fieldErrors = Object.values(data.error.fieldErrors).flat();
-            setError(fieldErrors.join(", "));
-          } else if (data.error?.formErrors) {
-            setError(data.error.formErrors.join(", "));
-          } else if (data.error?.message) {
-            setError(data.error.message);
-          } else if (data.message) {
-            setError(data.message);
-          } else {
-            setError("Bir hata oluştu. Lütfen tekrar deneyin.");
-          }
-        }
-      } catch (err) {
-        setError("Sunucuya ulaşılamıyor. Lütfen tekrar deneyin.");
-      }
-    });
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginMessage(null);
-    setLoginError(null);
-    startLoginTransition(async () => {
-      try {
-        const res = await fetch("/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(login),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setLoginMessage(`Hoş geldiniz, ${data.user.name} ${data.user.surname}!`);
-          setLogin(initialLogin);
-          // Auth context'e kullanıcıyı kaydet
-          authLogin(data.user, data.token);
-        } else {
-          setLoginError(data.error || "Bir hata oluştu.");
-        }
-      } catch (err) {
-        setLoginError("Sunucuya ulaşılamıyor. Lütfen tekrar deneyin.");
-      }
-    });
-  };
-
-  const getLevelText = (level: string) => {
-    switch (level) {
-      case 'beginner': return 'Başlangıç';
-      case 'intermediate': return 'Orta';
-      case 'advanced': return 'İleri';
-      default: return level;
-    }
-  };
-
-  const getAgeGroupText = (ageGroup: string) => {
-    switch (ageGroup) {
-      case 'children': return 'Çocuk';
-      case 'adults': return 'Yetişkin';
-      case 'all': return 'Tüm Yaşlar';
-      default: return ageGroup;
-    }
-  };
-
-  const getRoleText = (role: string) => {
-    switch (role) {
-      case 'student': return 'Öğrenci';
-      case 'instructor': return 'Eğitmen';
-      case 'admin': return 'Admin';
-      default: return role;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('tr-TR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  // Admin Functions
-  const handleViewUser = (user: User) => {
-    setSelectedUser(user);
-    setShowUserModal(true);
-  };
-
-  const handlePromoteUser = async (userId: string) => {
-    if (window.confirm('Bu kullanıcıyı eğitmen yapmak istediğinizden emin misiniz?')) {
-      try {
-        const res = await fetch(`/api/users/${userId}/promote`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' }
-        });
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/users');
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || []);
         
-        if (res.ok) {
-          // Kullanıcı listesini yenile
-          const usersRes = await fetch('/api/users');
-          const usersData = await usersRes.json();
-          if (usersRes.ok) {
-            setUsers(usersData.users);
-          }
-          alert('Kullanıcı başarıyla eğitmen yapıldı!');
-        } else {
-          alert('Bir hata oluştu!');
-        }
-      } catch (error) {
-        alert('Bir hata oluştu!');
+        const totalUsers = data.users.length;
+        const students = data.users.filter((u: User) => u.role === 'student').length;
+        const instructors = data.users.filter((u: User) => u.role === 'instructor').length;
+        const admins = data.users.filter((u: User) => u.role === 'admin').length;
+        
+        setStats({ totalUsers, students, instructors, admins });
       }
+    } catch (error) {
+      console.error('Kullanıcılar alınamadı:', error);
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (window.confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
-      try {
-        const res = await fetch(`/api/users/${userId}`, {
-          method: 'DELETE'
-        });
-        
-        if (res.ok) {
-          // Kullanıcı listesini yenile
-          setUsers(users.filter(u => u._id !== userId));
-          alert('Kullanıcı başarıyla silindi!');
-        } else {
-          alert('Bir hata oluştu!');
-        }
-      } catch (error) {
-        alert('Bir hata oluştu!');
+  const deleteUser = async (userId: string) => {
+    if (!confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        await fetchUsers();
+        setSelectedUser(null);
+        alert('Kullanıcı başarıyla silindi');
+      } else {
+        const error = await response.json();
+        alert(`Hata: ${error.message}`);
       }
+    } catch (error) {
+      console.error('Kullanıcı silinemedi:', error);
+      alert('Kullanıcı silinemedi');
+    }
+  };
+
+  const promoteUser = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/users/${userId}/promote`, {
+        method: 'PUT',
+      });
+
+      if (response.ok) {
+        await fetchUsers();
+        const updatedUser = users.find(u => u._id === userId);
+        if (updatedUser) {
+          setSelectedUser({...updatedUser, role: 'instructor'});
+        }
+        alert('Kullanıcı başarıyla eğitmen olarak yükseltildi');
+      } else {
+        const error = await response.json();
+        alert(`Hata: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Kullanıcı yükseltilemedi:', error);
+      alert('Kullanıcı yükseltilemedi');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-blue-300">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="bg-white/90 backdrop-blur-sm shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-blue-900">Yüze Yüzme Kursu</h1>
+      <nav className="bg-white shadow-lg sticky top-0 z-50">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-blue-600">
+                🏊‍♀️ Yüzme Akademisi
+              </h1>
             </div>
-            <div className="flex space-x-4">
+            
+            <div className="flex items-center space-x-6">
               <button
-                onClick={() => setActiveTab('home')}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${
-                  activeTab === 'home' ? 'bg-blue-700 text-white' : 'text-blue-700 hover:bg-blue-100'
-                }`}
-              >
-                Ana Sayfa
-              </button>
-              <button
-                onClick={() => setActiveTab('courses')}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${
-                  activeTab === 'courses' ? 'bg-blue-700 text-white' : 'text-blue-700 hover:bg-blue-100'
-                }`}
+                onClick={() => startTransition(() => {
+                  setShowCourses(!showCourses);
+                  if (!showCourses) fetchCourses();
+                })}
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
               >
                 Kurslar
               </button>
+              
+              {isAuthenticated && (
+                <button
+                  onClick={() => startTransition(() => {
+                    setShowEnrollments(!showEnrollments);
+                    if (!showEnrollments) fetchEnrollments();
+                  })}
+                  className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                >
+                  Kayıtlarım
+                </button>
+              )}
+              
               {isAdmin && (
                 <button
-                  onClick={() => setActiveTab('admin')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === 'admin' ? 'bg-blue-700 text-white' : 'text-blue-700 hover:bg-blue-100'
-                  }`}
+                  onClick={() => startTransition(() => {
+                    setShowAdminPanel(!showAdminPanel);
+                    if (!showAdminPanel) fetchUsers();
+                  })}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >
                   Admin Panel
                 </button>
               )}
-              {!isAuthenticated && (
-                <button
-                  onClick={() => setActiveTab('register')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === 'register' ? 'bg-blue-700 text-white' : 'text-blue-700 hover:bg-blue-100'
-                  }`}
-                >
-                  Kayıt Ol
-                </button>
-              )}
-              {!isAuthenticated ? (
-                <button
-                  onClick={() => setActiveTab('login')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === 'login' ? 'bg-blue-700 text-white' : 'text-blue-700 hover:bg-blue-100'
-                  }`}
-                >
-                  Giriş Yap
-                </button>
-              ) : (
-                <div className="flex items-center space-x-4">
-                  <span className="text-blue-700">
-                    Hoş geldiniz, {user?.name} {user?.surname}
-                  </span>
-                  <button
-                    onClick={logout}
-                    className="px-3 py-2 rounded-md text-sm font-medium text-blue-700 hover:bg-blue-100"
-                  >
-                    Çıkış Yap
-                  </button>
-                </div>
-              )}
+              
+              <div className="text-sm text-gray-600">
+                {isAuthenticated ? (
+                  <span>Hoş geldin, <strong>{user?.username}</strong>!</span>
+                ) : (
+                  <span>Giriş yapmamışsınız</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Image Carousel */}
-        <ImageCarousel />
+      {/* Hero Carousel */}
+      <ImageCarousel />
 
-        {/* Ana Sayfa */}
-        {activeTab === 'home' && (
-          <div className="space-y-12">
-            {/* Hero Section */}
-            <div className="text-center space-y-6">
-              <div className="relative w-full h-64 md:h-96 rounded-lg overflow-hidden shadow-lg">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/80 to-blue-800/80 flex items-center justify-center">
-                  <div className="text-white text-center">
-                    <h1 className="text-4xl md:text-6xl font-bold mb-4">
-                      Yüzmeyi Öğrenin
-                    </h1>
-                    <p className="text-xl md:text-2xl mb-8">
-                      Uzman eğitmenler eşliğinde, güvenli ve eğlenceli bir ortamda
-                    </p>
-                    <button
-                      onClick={() => setActiveTab('courses')}
-                      className="bg-white text-blue-700 px-8 py-3 rounded-full font-semibold text-lg hover:bg-blue-50 transition"
-                    >
-                      Kurslarımızı İnceleyin
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* Features Section */}
+      <FeaturesSection />
 
-            {/* Özellikler */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-white/90 rounded-lg p-6 shadow-lg text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-blue-900 mb-2">Uzman Eğitmenler</h3>
-                <p className="text-blue-700">Alanında deneyimli, sertifikalı eğitmen kadrosu ile güvenli eğitim.</p>
-              </div>
-              
-              <div className="bg-white/90 rounded-lg p-6 shadow-lg text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-blue-900 mb-2">Esnek Programlar</h3>
-                <p className="text-blue-700">Çocuk, yetişkin ve özel grup dersleri ile her yaşa uygun programlar.</p>
-              </div>
-              
-              <div className="bg-white/90 rounded-lg p-6 shadow-lg text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-blue-900 mb-2">Hijyenik Havuzlar</h3>
-                <p className="text-blue-700">Düzenli bakımlı, güvenli ve temiz havuzlar ile sağlıklı ortam.</p>
-              </div>
-            </div>
+      {/* Stats Section */}
+      <StatsSection />
 
-            {/* İstatistikler */}
-            <div className="bg-white/90 rounded-lg p-8 shadow-lg">
-              <h2 className="text-3xl font-bold text-blue-900 text-center mb-8">Neden Bizi Seçmelisiniz?</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-                <div>
-                  <div className="text-3xl font-bold text-blue-600">500+</div>
-                  <div className="text-blue-700">Mutlu Öğrenci</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-blue-600">10+</div>
-                  <div className="text-blue-700">Yıllık Deneyim</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-blue-600">15+</div>
-                  <div className="text-blue-700">Uzman Eğitmen</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-blue-600">3</div>
-                  <div className="text-blue-700">Modern Havuz</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* Contact Section */}
+      <ContactSection />
 
-        {/* Kurslar */}
-        {activeTab === 'courses' && (
-          <div className="space-y-8">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold text-blue-900 mb-4">Kurslarımız</h2>
-              <p className="text-lg text-blue-700">Her seviyeye uygun yüzme kursları</p>
-            </div>
-            
-            {isLoadingCourses ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-blue-700">Kurslar yükleniyor...</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((course) => (
-                  <div key={course._id} className="bg-white/90 rounded-lg shadow-lg overflow-hidden">
-                    <div className="p-6">
-                      <h3 className="text-xl font-semibold text-blue-900 mb-2">{course.name}</h3>
-                      <p className="text-blue-700 mb-4">{course.description}</p>
-                      
-                      <div className="space-y-2 mb-4">
-                        <div className="flex justify-between">
-                          <span className="text-blue-600 font-medium">Seviye:</span>
-                          <span className="text-blue-900">{getLevelText(course.level)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-blue-600 font-medium">Yaş Grubu:</span>
-                          <span className="text-blue-900">{getAgeGroupText(course.ageGroup)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-blue-600 font-medium">Süre:</span>
-                          <span className="text-blue-900">{course.duration} dakika</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-blue-600 font-medium">Maksimum:</span>
-                          <span className="text-blue-900">{course.maxStudents} öğrenci</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-blue-600 font-medium">Eğitmen:</span>
-                          <span className="text-blue-900">{course.instructor.name} {course.instructor.surname}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="text-2xl font-bold text-blue-600">{course.price} ₺</span>
-                        <button
-                          onClick={() => setActiveTab('register')}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-                        >
-                          Kayıt Ol
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Admin Panel */}
-        {activeTab === 'admin' && isAdmin && (
-          <div className="space-y-8">
-            {/* Admin Panel Header */}
-            <div className="text-center">
-              <h2 className="text-3xl font-bold text-blue-900 mb-4">Admin Panel</h2>
-              <p className="text-lg text-blue-700">Sistem yönetimi ve kullanıcı kontrolü</p>
-            </div>
-
-            {/* Admin Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white/90 rounded-lg p-6 shadow-lg text-center">
-                <div className="text-3xl font-bold text-blue-600">{users.length}</div>
-                <div className="text-blue-700">Toplam Kullanıcı</div>
-              </div>
-              <div className="bg-white/90 rounded-lg p-6 shadow-lg text-center">
-                <div className="text-3xl font-bold text-green-600">{users.filter(u => u.role === 'student').length}</div>
-                <div className="text-green-700">Öğrenci</div>
-              </div>
-              <div className="bg-white/90 rounded-lg p-6 shadow-lg text-center">
-                <div className="text-3xl font-bold text-orange-600">{users.filter(u => u.role === 'instructor').length}</div>
-                <div className="text-orange-700">Eğitmen</div>
-              </div>
-              <div className="bg-white/90 rounded-lg p-6 shadow-lg text-center">
-                <div className="text-3xl font-bold text-red-600">{users.filter(u => u.role === 'admin').length}</div>
-                <div className="text-red-700">Admin</div>
-              </div>
-            </div>
-
-            {/* Users Management Section */}
-            <div className="text-center">
-              <h3 className="text-2xl font-bold text-blue-900 mb-4">Kullanıcı Yönetimi</h3>
-            </div>
-            
-            {isLoadingUsers ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-blue-700">Kullanıcılar yükleniyor...</p>
-              </div>
-            ) : (
-              <div className="bg-white/90 rounded-lg shadow-lg overflow-hidden">
-                <div className="px-6 py-4 bg-blue-50 border-b">
-                  <h3 className="text-lg font-semibold text-blue-900">
-                    Toplam {users.length} kullanıcı
-                  </h3>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Ad Soyad
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Email / Kullanıcı Adı
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Telefon
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Yaş
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Rol
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Kayıt Tarihi
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          İşlemler
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {users.map((tableUser) => (
-                        <tr key={tableUser._id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10">
-                                <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
-                                  <span className="text-sm font-medium text-white">
-                                    {tableUser.name.charAt(0)}{tableUser.surname.charAt(0)}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {tableUser.name} {tableUser.surname}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{tableUser.email}</div>
-                            <div className="text-sm text-gray-500">@{tableUser.username}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {tableUser.phone}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {tableUser.age}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              tableUser.role === 'admin' 
-                                ? 'bg-red-100 text-red-800'
-                                : tableUser.role === 'instructor'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {getRoleText(tableUser.role)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(tableUser.createdAt)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleViewUser(tableUser)}
-                                className="text-blue-600 hover:text-blue-900 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded"
-                                title="Detayları Görüntüle"
-                              >
-                                👁️ Görüntüle
-                              </button>
-                              {tableUser.role !== 'admin' && (
-                                <button
-                                  onClick={() => handlePromoteUser(tableUser._id)}
-                                  className="text-green-600 hover:text-green-900 bg-green-100 hover:bg-green-200 px-2 py-1 rounded"
-                                  title="Eğitmen Yap"
-                                >
-                                  ⬆️ Yükselt
-                                </button>
-                              )}
-                              {tableUser._id !== user?._id && (
-                                <button
-                                  onClick={() => handleDeleteUser(tableUser._id)}
-                                  className="text-red-600 hover:text-red-900 bg-red-100 hover:bg-red-200 px-2 py-1 rounded"
-                                  title="Kullanıcıyı Sil"
-                                >
-                                  🗑️ Sil
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                
-                {users.length === 0 && (
-                  <div className="text-center py-12">
-                    <div className="text-gray-500">Henüz kayıtlı kullanıcı bulunmamaktadır.</div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* User Detail Modal */}
-            {showUserModal && selectedUser && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full m-4 max-h-[90vh] overflow-y-auto">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Kullanıcı Detayları
-                      </h3>
-                      <button
-                        onClick={() => setShowUserModal(false)}
-                        className="text-gray-400 hover:text-gray-600"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="px-6 py-4 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Ad</label>
-                        <p className="mt-1 text-sm text-gray-900">{selectedUser.name}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Soyad</label>
-                        <p className="mt-1 text-sm text-gray-900">{selectedUser.surname}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Email</label>
-                        <p className="mt-1 text-sm text-gray-900">{selectedUser.email}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Kullanıcı Adı</label>
-                        <p className="mt-1 text-sm text-gray-900">@{selectedUser.username}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Telefon</label>
-                        <p className="mt-1 text-sm text-gray-900">{selectedUser.phone}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Yaş</label>
-                        <p className="mt-1 text-sm text-gray-900">{selectedUser.age}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Rol</label>
-                        <p className="mt-1">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            selectedUser.role === 'admin' 
-                              ? 'bg-red-100 text-red-800'
-                              : selectedUser.role === 'instructor'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {getRoleText(selectedUser.role)}
-                          </span>
-                        </p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Kayıt Tarihi</label>
-                        <p className="mt-1 text-sm text-gray-900">{formatDate(selectedUser.createdAt)}</p>
-                      </div>
-                    </div>
-
-                    {selectedUser.emergencyContact && (
-                      <div className="border-t pt-4">
-                        <h4 className="text-md font-semibold text-gray-900 mb-3">Acil Durum Kişisi</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Ad Soyad</label>
-                            <p className="mt-1 text-sm text-gray-900">
-                              {selectedUser.emergencyContact.name || 'Belirtilmemiş'}
-                            </p>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Telefon</label>
-                            <p className="mt-1 text-sm text-gray-900">
-                              {selectedUser.emergencyContact.phone || 'Belirtilmemiş'}
-                            </p>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">İlişki</label>
-                            <p className="mt-1 text-sm text-gray-900">
-                              {selectedUser.emergencyContact.relationship || 'Belirtilmemiş'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-                    <button
-                      onClick={() => setShowUserModal(false)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-                    >
-                      Kapat
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Kayıt Formu */}
-        {activeTab === 'register' && (
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white/90 rounded-lg shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-blue-900 mb-6 text-center">Kayıt Ol</h2>
-              
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    name="name"
-                    type="text"
-                    placeholder="Adınız"
-                    value={form.name}
-                    onChange={handleChange}
-                    className="border border-blue-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    required
-                    minLength={2}
-                  />
-                  <input
-                    name="surname"
-                    type="text"
-                    placeholder="Soyadınız"
-                    value={form.surname}
-                    onChange={handleChange}
-                    className="border border-blue-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    required
-                    minLength={2}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    name="email"
-                    type="email"
-                    placeholder="E-posta"
-                    value={form.email}
-                    onChange={handleChange}
-                    className="border border-blue-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    required
-                  />
-                  <input
-                    name="phone"
-                    type="tel"
-                    placeholder="Telefon"
-                    value={form.phone}
-                    onChange={handleChange}
-                    className="border border-blue-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    required
-                    minLength={10}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    name="username"
-                    type="text"
-                    placeholder="Kullanıcı Adı"
-                    value={form.username}
-                    onChange={handleChange}
-                    className="border border-blue-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    required
-                    minLength={3}
-                  />
-                  <input
-                    name="age"
-                    type="number"
-                    placeholder="Yaşınız"
-                    value={form.age}
-                    onChange={handleChange}
-                    className="border border-blue-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    required
-                    min={3}
-                    max={100}
-                  />
-                </div>
-                
-                <input
-                  name="password"
-                  type="password"
-                  placeholder="Şifre"
-                  value={form.password}
-                  onChange={handleChange}
-                  className="border border-blue-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
-                  required
-                  minLength={6}
-                />
-
-                {/* Acil Durum Kişisi */}
-                <div className="border-t pt-4">
-                  <h3 className="text-lg font-semibold text-blue-900 mb-3">Acil Durum Kişisi (İsteğe Bağlı)</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input
-                      name="emergencyContact.name"
-                      type="text"
-                      placeholder="Ad Soyad"
-                      value={form.emergencyContact.name}
-                      onChange={handleChange}
-                      className="border border-blue-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                    <input
-                      name="emergencyContact.phone"
-                      type="tel"
-                      placeholder="Telefon"
-                      value={form.emergencyContact.phone}
-                      onChange={handleChange}
-                      className="border border-blue-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                    <input
-                      name="emergencyContact.relationship"
-                      type="text"
-                      placeholder="İlişki (Anne, Baba, vb.)"
-                      value={form.emergencyContact.relationship}
-                      onChange={handleChange}
-                      className="border border-blue-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-blue-700 text-white rounded-lg px-8 py-3 font-semibold shadow hover:bg-blue-800 transition disabled:opacity-60"
-                  disabled={isPending}
-                >
-                  {isPending ? "Kaydediliyor..." : "Kayıt Ol"}
-                </button>
-                
-                {message && <div className="text-green-700 text-center mt-2">{message}</div>}
-                {error && <div className="text-red-700 text-center mt-2">{error}</div>}
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Giriş Formu */}
-        {activeTab === 'login' && (
-          <div className="max-w-md mx-auto">
-            <div className="bg-white/90 rounded-lg shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-blue-900 mb-6 text-center">Giriş Yap</h2>
-              
-              <form onSubmit={handleLogin} className="space-y-4">
-                <input
-                  name="identifier"
-                  type="text"
-                  placeholder="Kullanıcı adı veya e-posta"
-                  value={login.identifier}
-                  onChange={handleLoginChange}
-                  className="border border-blue-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
-                  required
-                  minLength={3}
-                />
-                <input
-                  name="password"
-                  type="password"
-                  placeholder="Şifre"
-                  value={login.password}
-                  onChange={handleLoginChange}
-                  className="border border-blue-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
-                  required
-                  minLength={6}
-                />
-                <button
-                  type="submit"
-                  className="w-full bg-blue-700 text-white rounded-lg px-8 py-3 font-semibold shadow hover:bg-blue-800 transition disabled:opacity-60"
-                  disabled={isLoginPending}
-                >
-                  {isLoginPending ? "Giriş Yapılıyor..." : "Giriş Yap"}
-                </button>
-                
-                {loginMessage && <div className="text-green-700 text-center mt-2">{loginMessage}</div>}
-                {loginError && <div className="text-red-700 text-center mt-2">{loginError}</div>}
-              </form>
-            </div>
-          </div>
-        )}
-      </main>
-
-      <footer className="bg-blue-900 text-white py-8 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {/* Footer */}
+      <footer className="bg-gray-800 text-white py-12">
+        <div className="container mx-auto px-6">
+          <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">Yüze Yüzme Kursu</h3>
-              <p className="text-blue-200">
-                Uzman eğitmenler eşliğinde, her yaşa uygun yüzme eğitimleri.
+              <h3 className="text-xl font-bold mb-4 text-blue-400">Yüzme Akademisi</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Profesyonel yüzme eğitimi ile hayallerinizi gerçeğe dönüştürün.
               </p>
             </div>
+            
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Hizmetler</h4>
+              <ul className="space-y-2 text-gray-300">
+                <li>Çocuk Yüzme Kursları</li>
+                <li>Yetişkin Eğitimleri</li>
+                <li>Özel Dersler</li>
+                <li>Yarışma Hazırlığı</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="text-lg font-semibold mb-4">Seviyeler</h4>
+              <ul className="space-y-2 text-gray-300">
+                <li>Başlangıç</li>
+                <li>Orta Seviye</li>
+                <li>İleri Seviye</li>
+                <li>Profesyonel</li>
+              </ul>
+            </div>
+            
             <div>
               <h4 className="text-lg font-semibold mb-4">İletişim</h4>
-              <div className="space-y-2 text-blue-200">
-                <p>📧 info@yuze.com</p>
-                <p>📞 0 (555) 123 45 67</p>
-                <p>📍 İstanbul, Türkiye</p>
-              </div>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Sosyal Medya</h4>
-              <div className="flex space-x-4">
-                <a href="#" className="text-blue-200 hover:text-white transition">Instagram</a>
-                <a href="#" className="text-blue-200 hover:text-white transition">Facebook</a>
-                <a href="#" className="text-blue-200 hover:text-white transition">Twitter</a>
+              <div className="space-y-2 text-gray-300">
+                <p>📍 Elazığ, Türkiye</p>
+                <p>📞 +90 424 123 45 67</p>
+                <p>✉️ info@yuzmekursu.com</p>
               </div>
             </div>
           </div>
-          <div className="border-t border-blue-800 mt-8 pt-8 text-center text-blue-200">
-            <p>© 2024 Yüze Yüzme Kursu. Tüm hakları saklıdır.</p>
+          
+          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+            <p>&copy; 2024 Yüzme Akademisi. Tüm hakları saklıdır.</p>
           </div>
         </div>
       </footer>
+
+      {/* Courses Modal */}
+      {showCourses && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-800">Kurslarımız</h2>
+                <button
+                  onClick={() => setShowCourses(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              {isPending ? (
+                <div className="text-center py-8">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <p className="mt-2 text-gray-600">Kurslar yükleniyor...</p>
+                </div>
+              ) : courses.length > 0 ? (
+                <div className="grid md:grid-cols-2 gap-6">
+                  {courses.map((course) => (
+                    <div key={course._id} className="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow">
+                      <h3 className="text-xl font-semibold text-gray-800 mb-2">{course.title}</h3>
+                      <p className="text-gray-600 mb-3">{course.description}</p>
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <p><strong>Eğitmen:</strong> {course.instructor.fullName || course.instructor.username}</p>
+                        <p><strong>Program:</strong> {course.schedule}</p>
+                        <p><strong>Seviye:</strong> {course.level}</p>
+                        <p><strong>Fiyat:</strong> ₺{course.price}</p>
+                        <p><strong>Kontenjan:</strong> {course.currentStudents}/{course.maxStudents}</p>
+                      </div>
+                      <button className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors">
+                        Kayıt Ol
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-600">
+                  Henüz kurs bulunmuyor.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enrollments Modal */}
+      {showEnrollments && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-800">Kayıtlarım</h2>
+                <button
+                  onClick={() => setShowEnrollments(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              {isPending ? (
+                <div className="text-center py-8">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <p className="mt-2 text-gray-600">Kayıtlar yükleniyor...</p>
+                </div>
+              ) : enrollments.length > 0 ? (
+                <div className="space-y-4">
+                  {enrollments.map((enrollment) => (
+                    <div key={enrollment._id} className="border border-gray-200 rounded-xl p-6">
+                      <h3 className="text-xl font-semibold text-gray-800 mb-2">{enrollment.course.title}</h3>
+                      <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
+                        <div>
+                          <p><strong>Eğitmen:</strong> {enrollment.course.instructor.fullName || enrollment.course.instructor.username}</p>
+                          <p><strong>Program:</strong> {enrollment.course.schedule}</p>
+                          <p><strong>Seviye:</strong> {enrollment.course.level}</p>
+                        </div>
+                        <div>
+                          <p><strong>Kayıt Tarihi:</strong> {new Date(enrollment.enrollmentDate).toLocaleDateString('tr-TR')}</p>
+                          <p><strong>Durum:</strong> <span className="text-green-600 font-semibold">{enrollment.status}</span></p>
+                          <p><strong>Fiyat:</strong> ₺{enrollment.course.price}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-600">
+                  Henüz kursa kayıt olmamışsınız.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Panel Modal */}
+      {showAdminPanel && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-800">Admin Panel</h2>
+                <button
+                  onClick={() => setShowAdminPanel(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              {/* Stats Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-blue-50 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-blue-600">{stats.totalUsers}</div>
+                  <div className="text-sm text-gray-600">Toplam Kullanıcı</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-green-600">{stats.students}</div>
+                  <div className="text-sm text-gray-600">Öğrenci</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-purple-600">{stats.instructors}</div>
+                  <div className="text-sm text-gray-600">Eğitmen</div>
+                </div>
+                <div className="bg-red-50 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-red-600">{stats.admins}</div>
+                  <div className="text-sm text-gray-600">Admin</div>
+                </div>
+              </div>
+
+              {/* Users Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse bg-white rounded-xl overflow-hidden shadow-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="p-4 text-left text-gray-600 font-semibold">Kullanıcı Adı</th>
+                      <th className="p-4 text-left text-gray-600 font-semibold">E-posta</th>
+                      <th className="p-4 text-left text-gray-600 font-semibold">Rol</th>
+                      <th className="p-4 text-left text-gray-600 font-semibold">İşlemler</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((user) => (
+                      <tr key={user._id} className="border-t border-gray-100 hover:bg-gray-50">
+                        <td className="p-4 font-medium text-gray-800">{user.username}</td>
+                        <td className="p-4 text-gray-600">{user.email}</td>
+                        <td className="p-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                            user.role === 'instructor' ? 'bg-purple-100 text-purple-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {user.role === 'admin' ? 'Admin' : user.role === 'instructor' ? 'Eğitmen' : 'Öğrenci'}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => setSelectedUser(user)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+                            >
+                              Görüntüle
+                            </button>
+                            {user.role === 'student' && (
+                              <button
+                                onClick={() => promoteUser(user._id)}
+                                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+                              >
+                                Yükselt
+                              </button>
+                            )}
+                            <button
+                              onClick={() => deleteUser(user._id)}
+                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+                            >
+                              Sil
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Detail Modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-bold text-gray-800">Kullanıcı Detayları</h3>
+                <button
+                  onClick={() => setSelectedUser(null)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-1">Kullanıcı Adı</label>
+                <p className="text-gray-800">{selectedUser.username}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-1">E-posta</label>
+                <p className="text-gray-800">{selectedUser.email}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-1">Rol</label>
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                  selectedUser.role === 'admin' ? 'bg-red-100 text-red-800' :
+                  selectedUser.role === 'instructor' ? 'bg-purple-100 text-purple-800' :
+                  'bg-blue-100 text-blue-800'
+                }`}>
+                  {selectedUser.role === 'admin' ? 'Admin' : selectedUser.role === 'instructor' ? 'Eğitmen' : 'Öğrenci'}
+                </span>
+              </div>
+              {selectedUser.fullName && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600 mb-1">Ad Soyad</label>
+                  <p className="text-gray-800">{selectedUser.fullName}</p>
+                </div>
+              )}
+              {selectedUser.phone && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600 mb-1">Telefon</label>
+                  <p className="text-gray-800">{selectedUser.phone}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
